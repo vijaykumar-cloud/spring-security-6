@@ -2,6 +2,7 @@ package com.example.springsecurity.controller;
 
 import com.example.springsecurity.dto.LoginDto;
 import com.example.springsecurity.dto.RegisterDto;
+import com.example.springsecurity.model.RoleName;
 import com.example.springsecurity.model.User;
 import com.example.springsecurity.service.SecurityUserDetailsService;
 import com.example.springsecurity.service.UserService;
@@ -22,7 +23,7 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<?> register (@RequestBody RegisterDto registerDto) {
-        return  userService.register(registerDto);
+        return  userService.register(registerDto, RoleName.USER);
     }
 
     @PostMapping("/authenticate")

@@ -21,9 +21,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -36,6 +38,7 @@ public class UserService implements IUserService {
     private final AuthenticationManager authenticationManager ;
 
     private final JwtUtilities jwtUtilities;
+
 
     @Override
     public String authenticate(LoginDto loginDto) {
@@ -54,7 +57,7 @@ public class UserService implements IUserService {
     }
 
     @Override
-    public ResponseEntity<?> register(RegisterDto registerDto) {
+    public ResponseEntity<?> register(RegisterDto registerDto, RoleName roleName) {
         if (userRepository.existsByEmail(registerDto.getEmail())) {
             return new ResponseEntity<>("Email is already taken !", HttpStatus.SEE_OTHER);
         } else {
@@ -63,7 +66,7 @@ public class UserService implements IUserService {
             user.setFirstName(registerDto.getFirstName());
             user.setLastName(registerDto.getLastName());
             user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
-            Role role = roleRepository.findByRoleName(RoleName.USER);
+            Role role = roleRepository.findByRoleName(roleName);
             user.setRoles(Collections.singletonList(role));
             userRepository.save(user);
             String token = jwtUtilities.generateToken(registerDto.getEmail(), Collections.singletonList(role.getRoleName()));
@@ -80,4 +83,16 @@ public class UserService implements IUserService {
     public User saverUser(User user) {
         return userRepository.save(user);
     }
+
+    public List<RegisterDto> getUserList(String loggedInUser) {
+        List<User> all = userRepository.findAll();
+        return all.stream().filter(user -> !user.getEmail().equals(loggedInUser))
+                .map(user -> RegisterDto.builder()
+                        .email(user.getEmail())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
 }
